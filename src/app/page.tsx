@@ -3,7 +3,6 @@
 import React, { useRef } from "react";
 import { LandingHero } from "@/components/LandingHero";
 import { QueryBar } from "@/components/QueryBar";
-import { ProgressStepper } from "@/components/ProgressStepper";
 import { MaterialCard } from "@/components/MaterialCard";
 import { AshbyPlot } from "@/components/AshbyPlot";
 import { RadarChart } from "@/components/RadarChart";
@@ -15,7 +14,6 @@ import { Layers, Database, AlertCircle, Compass, Zap } from "lucide-react";
 export default function Home() {
   const querySectionRef = useRef<HTMLDivElement>(null);
   const {
-    stage,
     expansion,
     dbStats,
     candidates,
@@ -50,9 +48,6 @@ export default function Home() {
 
         {/* Query Input Bar */}
         <QueryBar onSubmit={runQuery} isProcessing={isProcessing} />
-
-        {/* Execution Pipeline Stepper */}
-        <ProgressStepper stage={stage} />
 
         {/* Multi-Query Expansion Showcase */}
         {expansion && (

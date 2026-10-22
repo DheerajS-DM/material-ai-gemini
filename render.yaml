@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: adith-material-engine
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: "openai/gpt-oss-120b"
+      - key: GEMINI_MODEL
+        value: "gemini-2.5-flash"
