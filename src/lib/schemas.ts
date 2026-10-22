@@ -11,6 +11,7 @@ export interface MaterialRecord {
   density_kg_m3: number | null;
   youngs_modulus_gpa: number | null;
   yield_strength_mpa: number | null;
+  compressive_strength_mpa?: number | null;
   ultimate_tensile_strength_mpa: number | null;
   shear_modulus_gpa: number | null;
   poissons_ratio: number | null;
@@ -63,6 +64,45 @@ export const MaterialQueryConstraintsSchema = z.object({
 
 export type MaterialQueryConstraints = z.infer<typeof MaterialQueryConstraintsSchema>;
 
+export const LoadModeEnum = z.enum([
+  "tie_tension",
+  "beam_bending",
+  "plate_bending",
+  "column_buckling",
+  "shaft_torsion",
+  "thermal_dissipation",
+  "general",
+]);
+
+export type LoadMode = z.infer<typeof LoadModeEnum>;
+
+export const ProfileIdEnum = z.enum([
+  "balanced",
+  "performance_frontier",
+  "pragmatic_cost",
+]);
+
+export type ProfileId = z.infer<typeof ProfileIdEnum>;
+
+export const MultiQueryProfileSchema = z.object({
+  profile_id: ProfileIdEnum,
+  label: z.string(),
+  description: z.string(),
+  constraints: MaterialQueryConstraintsSchema,
+});
+
+export type MultiQueryProfile = z.infer<typeof MultiQueryProfileSchema>;
+
+export const MultiQueryExpansionSchema = z.object({
+  target_application: z.string(),
+  load_mode: LoadModeEnum,
+  reasoning: z.string(),
+  feasibility_notes: z.string().optional(),
+  profiles: z.array(MultiQueryProfileSchema),
+});
+
+export type MultiQueryExpansion = z.infer<typeof MultiQueryExpansionSchema>;
+
 export interface RankedMaterial extends MaterialRecord {
   rank: number;
   maut_score: number;
@@ -70,6 +110,8 @@ export interface RankedMaterial extends MaterialRecord {
     m1_strength_to_density: number | null; // σ_y / ρ (Strength tie)
     m2_stiffness_to_density: number | null; // sqrt(E) / ρ (Stiffness beam)
     m3_cost_stiffness: number | null;       // sqrt(E) / (Cost * ρ)
+    mode_index_label?: string;
+    mode_index_value?: number | null;
   };
   dimension_scores: {
     strength: number;
@@ -78,4 +120,8 @@ export interface RankedMaterial extends MaterialRecord {
     cost: number;
   };
   has_missing_cost: boolean;
+  source_profile?: ProfileId;
+  gemini_badge?: string;
+  gemini_verdict?: string;
+  load_mode?: LoadMode;
 }

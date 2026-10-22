@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { MaterialQueryConstraints, RankedMaterial } from "@/lib/schemas";
+import { MaterialQueryConstraints, RankedMaterial, MultiQueryExpansion } from "@/lib/schemas";
 
 export interface StageInfo {
   step: "parsing" | "searching" | "ranking" | "analyzing" | "done" | "idle";
@@ -10,10 +10,16 @@ export interface DbStats {
   found_count: number;
   total_db_count: number;
   relaxation_logs: string[];
+  profile_stats?: {
+    profile_id: string;
+    label: string;
+    found_count: number;
+  }[];
 }
 
 export function useQueryPipeline() {
   const [stage, setStage] = useState<StageInfo>({ step: "idle", message: "" });
+  const [expansion, setExpansion] = useState<MultiQueryExpansion | null>(null);
   const [constraints, setConstraints] = useState<MaterialQueryConstraints | null>(null);
   const [dbStats, setDbStats] = useState<DbStats | null>(null);
   const [candidates, setCandidates] = useState<RankedMaterial[]>([]);
@@ -26,6 +32,7 @@ export function useQueryPipeline() {
     setError(null);
     setCandidates([]);
     setRationale("");
+    setExpansion(null);
     setConstraints(null);
     setDbStats(null);
     setStage({ step: "parsing", message: "Connecting to server engine..." });
@@ -72,6 +79,9 @@ export function useQueryPipeline() {
                 case "stage":
                   setStage(data);
                   break;
+                case "expansion":
+                  setExpansion(data);
+                  break;
                 case "constraints":
                   setConstraints(data);
                   break;
@@ -111,6 +121,7 @@ export function useQueryPipeline() {
 
   return {
     stage,
+    expansion,
     constraints,
     dbStats,
     candidates,

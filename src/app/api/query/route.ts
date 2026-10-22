@@ -1,7 +1,7 @@
-import { parseRequirementsWithGroq } from "@/lib/groq-parser";
-import { queryMaterials } from "@/lib/database";
+import { generateMultiQueryWithGroq } from "@/lib/groq-parser";
+import { queryMultiMaterials } from "@/lib/database";
 import { rankCandidates } from "@/lib/ranker";
-import { streamGeminiRationale } from "@/lib/gemini-synth";
+import { selectChampionsWithGemini, streamGeminiRationale } from "@/lib/gemini-synth";
 
 export const runtime = "nodejs";
 
@@ -27,28 +27,56 @@ export async function POST(req: Request) {
         };
 
         try {
-          // Stage 1: Parse requirements
-          sendEvent("stage", { step: "parsing", message: "Extracting quantitative constraints with Groq Llama-3.3..." });
-          const constraints = await parseRequirementsWithGroq(query);
-          sendEvent("constraints", constraints);
+          // Stage 1: Multi-hypothesis requirement expansion with Groq
+          sendEvent("stage", {
+            step: "parsing",
+            message: "Deconstructing specification into 3 search frontiers with Groq...",
+          });
+          const expansion = await generateMultiQueryWithGroq(query);
+          sendEvent("expansion", expansion);
+          // Send primary constraints for backward compatibility
+          sendEvent("constraints", expansion.profiles[0]?.constraints);
 
-          // Stage 2: Database Search & Filtering
-          sendEvent("stage", { step: "searching", message: "Querying MatWeb materials database..." });
-          const queryResult = queryMaterials(constraints);
+          // Stage 2: Database Search across all 3 profiles & candidate pooling
+          sendEvent("stage", {
+            step: "searching",
+            message: "Querying MatWeb across 3 search frontiers & pooling candidate pool...",
+          });
+          const queryResult = queryMultiMaterials(expansion);
           sendEvent("db_stats", {
             found_count: queryResult.candidates.length,
             total_db_count: queryResult.total_database_count,
             relaxation_logs: queryResult.relaxation_logs,
+            profile_stats: queryResult.profile_stats,
           });
 
-          // Stage 3: Deterministic Ashby & MAUT Ranking
-          sendEvent("stage", { step: "ranking", message: "Calculating Ashby performance indices and MAUT utility scores..." });
-          const rankedShortlist = rankCandidates(queryResult.candidates, constraints, 5);
-          sendEvent("candidates", rankedShortlist);
+          // Stage 3: Load-Mode-Specific Ashby & MAUT Pre-Scoring
+          sendEvent("stage", {
+            step: "ranking",
+            message: `Calculating ${expansion.load_mode} Ashby performance indices for ${queryResult.candidates.length} candidates...`,
+          });
+          const primaryConstraints = expansion.profiles.find((p) => p.profile_id === "balanced")?.constraints || expansion.profiles[0].constraints;
+          const preRankedPool = rankCandidates(
+            queryResult.candidates,
+            primaryConstraints,
+            18,
+            expansion.load_mode
+          );
 
-          // Stage 4: Engineering Rationale Generation (Gemini 2.0 Flash)
-          sendEvent("stage", { step: "analyzing", message: "Generating engineering rationale report with Gemini 2.0 Flash..." });
-          for await (const chunk of streamGeminiRationale(query, constraints, rankedShortlist)) {
+          // Stage 3.5: Gemini LLM-as-a-Judge Candidate Tournament Selection
+          sendEvent("stage", {
+            step: "analyzing",
+            message: "Gemini 2.5-Flash judging candidate pool and picking Top 5 Champions...",
+          });
+          const champions = await selectChampionsWithGemini(query, expansion, preRankedPool);
+          sendEvent("candidates", champions);
+
+          // Stage 4: Authoritative Engineering Trade-Off Report Stream
+          sendEvent("stage", {
+            step: "analyzing",
+            message: "Streaming comprehensive engineering trade-off rationale with Gemini 2.5-Flash...",
+          });
+          for await (const chunk of streamGeminiRationale(query, expansion, champions)) {
             sendEvent("rationale_chunk", { text: chunk });
           }
 

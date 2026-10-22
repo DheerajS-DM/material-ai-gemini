@@ -42,7 +42,7 @@ export function RationalePanel({ rationale, isProcessing, error }: RationalePane
             <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
               <span>Engineering Synthesis & Rationale Report</span>
               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#18181b] text-zinc-400 border border-zinc-700">
-                Gemini 3.8 Flash
+                Gemini 2.5 Flash
               </span>
             </h3>
             <p className="text-xs text-zinc-400 mt-0.5">

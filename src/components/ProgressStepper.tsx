@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Loader2, Sparkles, Database, Calculator, FileText } from "lucide-react";
+import { CheckCircle2, Loader2, Sparkles, Database, Calculator, Trophy } from "lucide-react";
 import { StageInfo } from "@/hooks/useQuery";
 
 interface ProgressStepperProps {
@@ -9,10 +9,10 @@ interface ProgressStepperProps {
 }
 
 const STEPS = [
-  { id: "parsing", label: "Groq Llama-3.3 Parsing", icon: Sparkles },
-  { id: "searching", label: "MatWeb Vector Search", icon: Database },
-  { id: "ranking", label: "Ashby & MAUT Scoring", icon: Calculator },
-  { id: "analyzing", label: "Gemini 2.0 Rationale", icon: FileText },
+  { id: "parsing", label: "Groq Multi-Query Expansion", icon: Sparkles },
+  { id: "searching", label: "MatWeb Frontier Pool", icon: Database },
+  { id: "ranking", label: "Ashby Load-Mode Pre-Score", icon: Calculator },
+  { id: "analyzing", label: "Gemini Tournament Selection", icon: Trophy },
 ];
 
 export function ProgressStepper({ stage }: ProgressStepperProps) {
@@ -82,4 +82,3 @@ export function ProgressStepper({ stage }: ProgressStepperProps) {
     </div>
   );
 }
-
